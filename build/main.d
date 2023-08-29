@@ -1,2 +1,2 @@
-build/main.o: src/main.cpp src/../include/window.hpp
-src/../include/window.hpp:
+build/main.o: src/main.cpp src/../game/include/game.hpp
+src/../game/include/game.hpp:

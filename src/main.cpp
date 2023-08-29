@@ -1,6 +1,7 @@
-#include "../include/window.hpp"
+#include "../game/include/game.hpp"
+#include <iostream>
 
 int main(){
-    win_start();
+    game_init();
     return 0;
 }

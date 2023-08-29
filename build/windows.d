@@ -1,2 +1,1 @@
-build/windows.o: src/windows.cpp src/../include/window.hpp
-src/../include/window.hpp:
+build/windows.o: src/windows.cpp
