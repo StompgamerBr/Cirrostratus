@@ -1,66 +1,100 @@
+# executable name
+EXE = output
+
+# C compiler
 CC = gcc
+# C++ compiler
 CXX = g++
+# linker
+LD = g++
 
-SRC_PATH = src
-BUILD_PATH = build
-BIN_PATH = $(BUILD_PATH)/bin
 
-COMPILE_FLAGS = -Wall -ggdb -O3
-LINK_FLAGS = -lglfw3 -lopengl32 -lglu32 -lgdi32
+# C flags
+CFLAGS = 
+# C++ flags
+CXXFLAGS = -std=c++17 
+# C/C++ flags
+CPPFLAGS = -Wall -ggdb
+# dependency-generation flags
+DEPFLAGS = -MMD -MP
+# linker flags
+LDFLAGS = 
+# library flags
+LDLIBS = 
+#C++ after flags
+GFLWFLAGS = -lglfw -lm -lGL -lGLU
+# build directories
+BIN = build/bin
+OBJ = build
+SRC = src
 
-glfw = d:/external/glfw-3.1
-glfw_inc = $(glfw)/include
-glfw_lib = $(glfw)/lib64
+SOURCES := $(wildcard $(SRC)/*.c $(SRC)/*.cc $(SRC)/*.cpp $(SRC)/*.cxx)
 
-INCLUDES = -I$(glfw_inc) -I$(glad_inc)
-LIBRARIES = -L$(glfw_lib)
+OBJECTS := \
+	$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
+	$(patsubst $(SRC)/%.cc, $(OBJ)/%.o, $(wildcard $(SRC)/*.cc)) \
+	$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(wildcard $(SRC)/*.cpp)) \
+	$(patsubst $(SRC)/%.cxx, $(OBJ)/%.o, $(wildcard $(SRC)/*.cxx))
 
-cpp_files = main.cpp
-objects = $(cpp_files:.cpp=.o)
-headers =
+# include compiler-generated dependency rules
+DEPENDS := $(OBJECTS:.o=.d)
 
-.PHONY: default_target
-default_target: release
+# compile C source
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c -o $@ 
+# compile C++ source
+COMPILE.cxx = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ 
+# link objects
+LINK.o = $(LD) $(LDFLAGS) $(LDLIBS) $(OBJECTS) -o $@ $(GFLWFLAGS)
 
-.PHONY: release
-release: dirs
-	@$(MAKE) all
+.DEFAULT_GOAL = all
 
-.PHONY: dirs
-dirs:
-	@echo "Creating directories"
-	@mkdir -p $(dir $(OBJECTS))
-	@mkdir -p $(BIN_PATH)
+.PHONY: all
+all: $(BIN)/$(EXE)
 
+$(BIN)/$(EXE): $(SRC) $(OBJ) $(BIN) $(OBJECTS)
+	$(LINK.o)
+
+$(SRC):
+	mkdir -p $(SRC)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(BIN):
+	mkdir -p $(BIN)
+
+$(OBJ)/%.o:	$(SRC)/%.c
+	$(COMPILE.c) $<
+
+$(OBJ)/%.o:	$(SRC)/%.cc
+	$(COMPILE.cxx) $<
+
+$(OBJ)/%.o:	$(SRC)/%.cpp
+	$(COMPILE.cxx) $<
+
+$(OBJ)/%.o:	$(SRC)/%.cxx
+	$(COMPILE.cxx) $<
+
+# force rebuild
+.PHONY: remake
+remake:	clean $(BIN)/$(EXE)
+
+# execute the program
+.PHONY: run
+run: $(BIN)/$(EXE)
+	./$(BIN)/$(EXE)
+
+# remove previous build and objects
 .PHONY: clean
 clean:
-	@echo "Deleting $(BIN_NAME) symlink"
-	@$(RM) $(BIN_NAME)
-	@echo "Deleting directories"
-	@$(RM) -r $(BUILD_PATH)
-	@$(RM) -r $(BIN_PATH)
+	$(RM) $(OBJECTS)
+	$(RM) $(DEPENDS)
+	$(RM) $(BIN)/$(EXE)
 
-# checks the executable and symlinks to the output
-.PHONY: all
-all: $(BIN_PATH)/$(BIN_NAME)
-	@echo "Making symlink: $(BIN_NAME) -> $<"
-	@$(RM) $(BIN_NAME)
-	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
+# remove everything except source
+.PHONY: reset
+reset:
+	$(RM) -r $(OBJ)
+	$(RM) -r $(BIN)
 
-# Creation of the executable
-$(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
-	@echo "Linking: $@"
-	$(CXX) $(OBJECTS) -o $@ ${LIBS}
-
-# Add dependency files, if they exist
--include $(DEPS)
-
-# Source file rules
-# After the first compilation they will be joined with the rules from the
-# dependency files to provide header dependencies
-$(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
-	@echo "Compiling: $< -> $@"
-
-	$(CXX) $(COMPILE_FLAGS) $(INCLUDES) -MP -MMD -c $< -o $@ $(LINK_FLAGS)
-
-
+-include $(DEPENDS)

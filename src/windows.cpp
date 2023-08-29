@@ -1,9 +1,10 @@
 #include <GLFW/glfw3.h>
-#include "window.hpp"
+#include <iostream>
+#include "../include/window.hpp"
 
 
 int win_start(void)
-{
+{      
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -34,6 +35,6 @@ int win_start(void)
         glfwPollEvents();
     }
 
-    glfwTerminate();
+    // glfwTerminate();
     return 0;
 }
